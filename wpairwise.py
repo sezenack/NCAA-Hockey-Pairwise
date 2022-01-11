@@ -424,10 +424,11 @@ def readGames(teamstats, filename):
         team2 = firstsheet.cell(row = g, column = 4).value.strip()
         team2score = firstsheet.cell(row = g, column = 5).value
         regulation = firstsheet.cell(row = g, column = 6).value
+        # Remove possible padding
         if regulation is not None:
             regulation = regulation.strip()
 
-        # neutral site game?
+        # Neutral site game?
         if firstsheet.cell(row = g, column = 3).value.strip() == "vs":
             neutral = True
         else:
@@ -447,6 +448,8 @@ def readGames(teamstats, filename):
             teamstats[team1]["t"] = []
             # Initialize list of opponents
             teamstats[team1]["opponents"] = []
+            # Initialize list of future games
+            teamstats[team1]["toplay"] = []
 
         if team2 not in teamstats:
             # Initialize team dict
@@ -461,6 +464,18 @@ def readGames(teamstats, filename):
             teamstats[team2]["t"] = []
             # Initialize list of opponents
             teamstats[team2]["opponents"] = []
+            # Initialize list of future games
+            teamstats[team2]["toplay"] = []
+
+        # Game hasn't been played yet
+        if team1score == '' or team1score is None or team2score == '' or team2score is None:
+            # update toplay
+            if neutral:
+                teamstats[team1]["toplay"].append(["N", team2])
+                teamstats[team2]["toplay"].append(["N", team1])
+            else:
+                teamstats[team1]["toplay"].append(["A", team2])
+                teamstats[team2]["toplay"].append(["H", team1])
         
         # check to see winner
         if team1score == team2score:
