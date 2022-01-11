@@ -11,7 +11,13 @@ OOWPWEIGHT = 0.46
 QWBSTART = 0.060
 QWBSCALE = QWBSTART / 12
 
-def outputPWR(teamstats, sortedpwr):
+def outputPWR(teamstats, filename):
+    # For output in order of the pairwise
+    pwr = dict()
+    for t in teamstats:
+        pwr[t] = (teamstats[t]["pwr"], teamstats[t]["rpi"])
+    sortedpwr = sorted(pwr.items(), key=lambda kv: (kv[1][0], kv[1][1]), reverse = True)
+
     # Create sheet
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -39,7 +45,7 @@ def outputPWR(teamstats, sortedpwr):
         r += 1
 
     # Save wb
-    wb.save('Womens Pairwise.xlsx')
+    wb.save(filename)
 
 
 def compareH2H(teamstats, team1, team2):
@@ -435,7 +441,7 @@ def readGames(teamstats, filename):
             neutral = False
         
         # Initialize if necessary
-        if team1 not in teamstats:
+        if team1 not in teamstats and "/" not in team1:
             # Initialize team dict
             teamstats[team1] = dict()
             # Initialize comparisons won to 0
@@ -451,7 +457,7 @@ def readGames(teamstats, filename):
             # Initialize list of future games
             teamstats[team1]["toplay"] = []
 
-        if team2 not in teamstats:
+        if team2 not in teamstats and "/" not in team2:
             # Initialize team dict
             teamstats[team2] = dict()
             # Initialize comparisons won to 0
@@ -471,11 +477,21 @@ def readGames(teamstats, filename):
         if team1score == '' or team1score is None or team2score == '' or team2score is None:
             # update toplay
             if neutral:
-                teamstats[team1]["toplay"].append(["N", team2])
-                teamstats[team2]["toplay"].append(["N", team1])
+                # check for in-season tournaments
+                if "/" not in team1:
+                    teamstats[team1]["toplay"].append(["N", team2])
+                # check for in-season tournaments
+                if "/" not in team2:
+                    teamstats[team2]["toplay"].append(["N", team1])
             else:
-                teamstats[team1]["toplay"].append(["A", team2])
-                teamstats[team2]["toplay"].append(["H", team1])
+                # check for in-season tournaments
+                if "/" not in team1:
+                    teamstats[team1]["toplay"].append(["A", team2])
+                # check for in-season tournaments
+                if "/" not in team2:
+                    teamstats[team2]["toplay"].append(["H", team1])
+            g += 1
+            continue
         
         # check to see winner
         if team1score == team2score:
@@ -525,7 +541,7 @@ def readGames(teamstats, filename):
         # Increment counter for reading the spreadsheet
         g += 1
 
-def main():
+def main(read):
     # Mega dictionary with all info
     # key = team name
     # value = dictionary with: win pct (float), opponent win pct (float), opponent opponent win pct (float)
@@ -534,20 +550,15 @@ def main():
     # opponents (list of opponents), weighted games played (float)
     teamstats = dict()
 
-    readGames(teamstats, "../women.xlsx")
+    readGames(teamstats, read)
     calcRPI(teamstats)
     removeBadWins(teamstats)
     calcQWB(teamstats)
     calcFinalRPI(teamstats)
     calcPWR(teamstats)
 
-    # For output in order of the pairwise
-    pwr = dict()
-    for t in teamstats:
-        pwr[t] = (teamstats[t]["pwr"], teamstats[t]["rpi"])
-    sortedpwr = sorted(pwr.items(), key=lambda kv: (kv[1][0], kv[1][1]), reverse = True)
-    outputPWR(teamstats, sortedpwr)
-    return sortedpwr
+    return teamstats
 
 if __name__ == "__main__":
-    main()
+    teamstats = main("../women.xlsx")
+    outputPWR(teamstats, 'Womens Pairwise.xlsx')

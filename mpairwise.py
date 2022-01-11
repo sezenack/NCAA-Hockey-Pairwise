@@ -435,7 +435,7 @@ def readGames(teamstats, filename):
             neutral = False
         
         # Initialize if necessary
-        if team1 not in teamstats:
+        if team1 not in teamstats and "/" not in team1:
             # Initialize team dict
             teamstats[team1] = dict()
             # Initialize comparisons won to 0
@@ -451,7 +451,7 @@ def readGames(teamstats, filename):
             # Initialize list of future games
             teamstats[team1]["toplay"] = []
 
-        if team2 not in teamstats:
+        if team2 not in teamstats and "/" not in team2:
             # Initialize team dict
             teamstats[team2] = dict()
             # Initialize comparisons won to 0
@@ -471,11 +471,21 @@ def readGames(teamstats, filename):
         if team1score == '' or team1score is None or team2score == '' or team2score is None:
             # update toplay
             if neutral:
-                teamstats[team1]["toplay"].append(["N", team2])
-                teamstats[team2]["toplay"].append(["N", team1])
+                # check for in-season tournaments
+                if "/" not in team1:
+                    teamstats[team1]["toplay"].append(["N", team2])
+                # check for in-season tournaments
+                if "/" not in team2:
+                    teamstats[team2]["toplay"].append(["N", team1])
             else:
-                teamstats[team1]["toplay"].append(["A", team2])
-                teamstats[team2]["toplay"].append(["H", team1])
+                # check for in-season tournaments
+                if "/" not in team1:
+                    teamstats[team1]["toplay"].append(["A", team2])
+                # check for in-season tournaments
+                if "/" not in team2:
+                    teamstats[team2]["toplay"].append(["H", team1])
+            g += 1
+            continue
         
         # check to see winner
         if team1score == team2score:
